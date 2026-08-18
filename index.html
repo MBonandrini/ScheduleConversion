@@ -1,0 +1,2925 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+
+<title>ProjectConvert — Universal Project Converter</title>
+
+<style>
+
+:root {
+    --bg:#070a0f;
+    --bg2:#0c1119;
+    --panel:#101722;
+    --panel2:#141c28;
+    --border:#263142;
+    --text:#edf2f7;
+    --muted:#8995a5;
+
+    --blue:#5b8cff;
+    --blue2:#7ba3ff;
+    --green:#32d583;
+    --purple:#9b8afb;
+    --orange:#fdb022;
+    --red:#f97066;
+
+    --radius:12px;
+}
+
+* {
+    box-sizing:border-box;
+}
+
+body {
+    margin:0;
+    background:
+        radial-gradient(
+            circle at 10% 0%,
+            rgba(91,140,255,.11),
+            transparent 30%
+        ),
+        radial-gradient(
+            circle at 90% 10%,
+            rgba(155,138,251,.08),
+            transparent 28%
+        ),
+        var(--bg);
+
+    color:var(--text);
+
+    font-family:
+        Inter,
+        ui-sans-serif,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+}
+
+button,
+select,
+input {
+    font:inherit;
+}
+
+button {
+    cursor:pointer;
+}
+
+.container {
+    width:min(1200px,calc(100% - 36px));
+    margin:auto;
+}
+
+/* HEADER */
+
+header {
+    height:70px;
+
+    position:sticky;
+    top:0;
+    z-index:50;
+
+    background:rgba(7,10,15,.88);
+    backdrop-filter:blur(20px);
+
+    border-bottom:1px solid var(--border);
+}
+
+.header-inner {
+    height:100%;
+
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+}
+
+.logo {
+    display:flex;
+    align-items:center;
+    gap:11px;
+
+    font-weight:750;
+}
+
+.logo-icon {
+    width:35px;
+    height:35px;
+
+    display:grid;
+    place-items:center;
+
+    border-radius:9px;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--blue),
+            var(--purple)
+        );
+
+    font-weight:900;
+}
+
+.logo span {
+    color:var(--muted);
+    font-weight:500;
+}
+
+.status {
+    color:var(--muted);
+    font-size:12px;
+
+    display:flex;
+    align-items:center;
+    gap:7px;
+}
+
+.status-dot {
+    width:8px;
+    height:8px;
+
+    border-radius:50%;
+
+    background:var(--green);
+
+    box-shadow:
+        0 0 12px var(--green);
+}
+
+/* HERO */
+
+.hero {
+    text-align:center;
+    padding:65px 0 45px;
+}
+
+.badge {
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+
+    padding:7px 12px;
+
+    border:1px solid var(--border);
+    border-radius:999px;
+
+    background:rgba(255,255,255,.025);
+
+    color:var(--muted);
+    font-size:11px;
+}
+
+.badge strong {
+    color:var(--green);
+}
+
+h1 {
+    font-size:
+        clamp(
+            40px,
+            6vw,
+            68px
+        );
+
+    letter-spacing:-3px;
+
+    line-height:1;
+
+    margin:20px 0 0;
+}
+
+.gradient {
+    color:transparent;
+
+    background:
+        linear-gradient(
+            90deg,
+            #fff,
+            #8eb2ff,
+            #a998ff
+        );
+
+    -webkit-background-clip:text;
+    background-clip:text;
+}
+
+.hero p {
+    max-width:700px;
+
+    margin:22px auto 0;
+
+    color:var(--muted);
+
+    line-height:1.7;
+
+    font-size:16px;
+}
+
+/* MAIN CONVERTER */
+
+.converter {
+    background:rgba(16,23,34,.9);
+
+    border:1px solid var(--border);
+
+    border-radius:18px;
+
+    overflow:hidden;
+
+    box-shadow:
+        0 30px 80px rgba(0,0,0,.35);
+}
+
+.converter-header {
+    padding:20px 24px;
+
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+
+    border-bottom:1px solid var(--border);
+}
+
+.converter-title {
+    font-weight:700;
+}
+
+.converter-subtitle {
+    color:var(--muted);
+    font-size:12px;
+    margin-top:4px;
+}
+
+.formats {
+    display:flex;
+    gap:7px;
+}
+
+.format {
+    padding:5px 9px;
+
+    border:1px solid var(--border);
+    border-radius:6px;
+
+    font-size:10px;
+    font-weight:750;
+
+    color:var(--muted);
+}
+
+.mpp {
+    color:#75a6ff;
+}
+
+.xer {
+    color:#50e59a;
+}
+
+.pp {
+    color:#ad9fff;
+}
+
+/* DROP */
+
+.dropzone {
+    margin:24px;
+
+    min-height:230px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    text-align:center;
+
+    border:
+        1.5px dashed
+        #344154;
+
+    border-radius:14px;
+
+    transition:.2s;
+
+    background:
+        rgba(255,255,255,.012);
+}
+
+.dropzone:hover,
+.dropzone.drag {
+    border-color:var(--blue);
+
+    background:
+        rgba(91,140,255,.045);
+}
+
+.upload-icon {
+    width:55px;
+    height:55px;
+
+    display:grid;
+    place-items:center;
+
+    margin:0 auto 15px;
+
+    border-radius:14px;
+
+    background:
+        rgba(91,140,255,.1);
+
+    color:var(--blue);
+
+    font-size:25px;
+}
+
+.dropzone h3 {
+    margin:0;
+}
+
+.dropzone p {
+    color:var(--muted);
+    font-size:13px;
+}
+
+.browse {
+    border:0;
+
+    background:var(--blue);
+
+    color:#fff;
+
+    border-radius:8px;
+
+    padding:10px 17px;
+
+    font-weight:650;
+}
+
+.browse:hover {
+    background:var(--blue2);
+}
+
+#fileInput {
+    display:none;
+}
+
+.file-types {
+    margin-top:13px;
+
+    color:#626f80;
+
+    font-size:10px;
+}
+
+/* FILE */
+
+.file-panel {
+    display:none;
+
+    margin:0 24px 20px;
+
+    border:1px solid var(--border);
+
+    border-radius:11px;
+
+    overflow:hidden;
+}
+
+.file-panel.show {
+    display:block;
+}
+
+.file-header {
+    padding:13px 15px;
+
+    background:
+        rgba(255,255,255,.025);
+
+    border-bottom:1px solid var(--border);
+
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+}
+
+.file-info {
+    display:flex;
+    align-items:center;
+    gap:10px;
+}
+
+.file-icon {
+    width:35px;
+    height:35px;
+
+    display:grid;
+    place-items:center;
+
+    border-radius:8px;
+
+    font-size:10px;
+    font-weight:800;
+}
+
+.file-name {
+    font-size:13px;
+    font-weight:650;
+}
+
+.file-size {
+    color:var(--muted);
+    font-size:10px;
+    margin-top:2px;
+}
+
+.remove {
+    background:none;
+    border:0;
+    color:var(--muted);
+    font-size:19px;
+}
+
+.remove:hover {
+    color:var(--red);
+}
+
+/* STATS */
+
+.stats {
+    display:grid;
+
+    grid-template-columns:
+        repeat(5,1fr);
+}
+
+.stat {
+    padding:14px;
+
+    border-right:1px solid var(--border);
+}
+
+.stat:last-child {
+    border-right:0;
+}
+
+.stat-label {
+    color:var(--muted);
+
+    font-size:9px;
+
+    text-transform:uppercase;
+
+    letter-spacing:.6px;
+}
+
+.stat-value {
+    margin-top:5px;
+
+    font-size:13px;
+
+    font-weight:650;
+}
+
+/* OPTIONS */
+
+.options {
+    display:none;
+
+    grid-template-columns:
+        repeat(3,1fr);
+
+    gap:12px;
+
+    padding:0 24px 20px;
+}
+
+.options.show {
+    display:grid;
+}
+
+.option {
+    padding:14px;
+
+    border:1px solid var(--border);
+
+    border-radius:10px;
+
+    background:
+        rgba(255,255,255,.015);
+}
+
+.option label {
+    display:block;
+
+    color:var(--muted);
+
+    font-size:10px;
+
+    margin-bottom:7px;
+
+    text-transform:uppercase;
+}
+
+select {
+    width:100%;
+
+    padding:9px;
+
+    color:var(--text);
+
+    background:#090d14;
+
+    border:1px solid var(--border);
+
+    border-radius:7px;
+
+    outline:none;
+}
+
+/* MAPPING */
+
+.mapping-section {
+    display:none;
+
+    margin:0 24px 20px;
+
+    border:1px solid var(--border);
+
+    border-radius:12px;
+
+    overflow:hidden;
+}
+
+.mapping-section.show {
+    display:block;
+}
+
+.mapping-header {
+    padding:16px;
+
+    background:
+        rgba(255,255,255,.025);
+
+    border-bottom:1px solid var(--border);
+}
+
+.mapping-header h3 {
+    margin:0;
+
+    font-size:14px;
+}
+
+.mapping-header p {
+    margin:5px 0 0;
+
+    color:var(--muted);
+
+    font-size:11px;
+
+    line-height:1.5;
+}
+
+.mapping-summary {
+    display:flex;
+
+    gap:8px;
+
+    flex-wrap:wrap;
+
+    margin-top:11px;
+}
+
+.mapping-badge {
+    padding:5px 8px;
+
+    border-radius:6px;
+
+    font-size:9px;
+
+    background:
+        rgba(91,140,255,.08);
+
+    color:#86aaff;
+
+    border:1px solid
+        rgba(91,140,255,.18);
+}
+
+.mapping-table {
+    width:100%;
+
+    border-collapse:collapse;
+
+    font-size:11px;
+}
+
+.mapping-table th {
+    text-align:left;
+
+    color:var(--muted);
+
+    font-size:9px;
+
+    text-transform:uppercase;
+
+    letter-spacing:.5px;
+
+    background:#0c1119;
+
+    padding:10px 12px;
+}
+
+.mapping-table td {
+    padding:10px 12px;
+
+    border-top:1px solid var(--border);
+
+    vertical-align:middle;
+}
+
+.mapping-table tr:hover td {
+    background:
+        rgba(255,255,255,.015);
+}
+
+.mapping-value {
+    color:#d7deea;
+}
+
+.mapping-target {
+    color:#8eaaff;
+}
+
+.mapping-status {
+    display:inline-flex;
+
+    padding:4px 7px;
+
+    border-radius:5px;
+
+    font-size:9px;
+}
+
+.status-direct {
+    color:var(--green);
+
+    background:
+        rgba(50,213,131,.08);
+}
+
+.status-custom {
+    color:var(--orange);
+
+    background:
+        rgba(253,176,34,.08);
+}
+
+.status-preserved {
+    color:var(--purple);
+
+    background:
+        rgba(155,138,251,.08);
+}
+
+/* CONVERT */
+
+.action {
+    display:none;
+
+    padding:0 24px 24px;
+}
+
+.action.show {
+    display:block;
+}
+
+.convert {
+    width:100%;
+
+    padding:14px;
+
+    border:0;
+
+    border-radius:9px;
+
+    color:#fff;
+
+    font-weight:700;
+
+    background:
+        linear-gradient(
+            135deg,
+            var(--blue),
+            #7568ed
+        );
+}
+
+.convert:disabled {
+    opacity:.5;
+}
+
+/* PROGRESS */
+
+.progress {
+    display:none;
+
+    padding:0 24px 24px;
+}
+
+.progress.show {
+    display:block;
+}
+
+.progress-info {
+    display:flex;
+    justify-content:space-between;
+
+    color:var(--muted);
+
+    font-size:10px;
+
+    margin-bottom:7px;
+}
+
+.progress-track {
+    height:6px;
+
+    background:#202937;
+
+    border-radius:20px;
+
+    overflow:hidden;
+}
+
+.progress-fill {
+    width:0;
+    height:100%;
+
+    background:
+        linear-gradient(
+            90deg,
+            var(--blue),
+            var(--purple)
+        );
+
+    transition:.25s;
+}
+
+/* RESULT */
+
+.result {
+    display:none;
+
+    margin:0 24px 24px;
+
+    padding:15px;
+
+    border-radius:10px;
+
+    border:1px solid
+        rgba(50,213,131,.2);
+
+    background:
+        rgba(50,213,131,.04);
+
+    justify-content:space-between;
+
+    align-items:center;
+}
+
+.result.show {
+    display:flex;
+}
+
+.download {
+    padding:9px 13px;
+
+    border-radius:7px;
+
+    border:1px solid
+        rgba(50,213,131,.25);
+
+    background:
+        rgba(50,213,131,.08);
+
+    color:var(--green);
+
+    font-weight:650;
+}
+
+/* FORMAT EXPLANATION */
+
+.explanation {
+    padding:70px 0;
+}
+
+.heading {
+    text-align:center;
+    margin-bottom:30px;
+}
+
+.heading h2 {
+    font-size:25px;
+    margin:0;
+}
+
+.heading p {
+    color:var(--muted);
+    font-size:13px;
+}
+
+.cards {
+    display:grid;
+
+    grid-template-columns:
+        repeat(3,1fr);
+
+    gap:14px;
+}
+
+.card {
+    padding:22px;
+
+    border:1px solid var(--border);
+
+    border-radius:12px;
+
+    background:var(--panel);
+}
+
+.card h3 {
+    margin:0 0 8px;
+
+    font-size:15px;
+}
+
+.card p {
+    margin:0;
+
+    color:var(--muted);
+
+    font-size:11px;
+
+    line-height:1.7;
+}
+
+/* NOTICE */
+
+.notice {
+    margin-bottom:55px;
+
+    padding:17px;
+
+    border-radius:11px;
+
+    border:
+        1px solid
+        rgba(253,176,34,.18);
+
+    background:
+        rgba(253,176,34,.035);
+
+    color:#c9b37f;
+
+    font-size:11px;
+
+    line-height:1.7;
+}
+
+.notice strong {
+    color:var(--orange);
+}
+
+/* FOOTER */
+
+footer {
+    padding:28px 0;
+
+    border-top:1px solid var(--border);
+
+    text-align:center;
+
+    color:#596576;
+
+    font-size:10px;
+}
+
+/* MOBILE */
+
+@media(max-width:750px) {
+
+    .container {
+        width:calc(100% - 24px);
+    }
+
+    .converter-header {
+        flex-direction:column;
+        align-items:flex-start;
+        gap:12px;
+    }
+
+    .formats {
+        width:100%;
+    }
+
+    .format {
+        flex:1;
+        text-align:center;
+    }
+
+    .stats {
+        grid-template-columns:
+            repeat(2,1fr);
+    }
+
+    .stat:nth-child(2n) {
+        border-right:0;
+    }
+
+    .stat:nth-child(-n+2) {
+        border-bottom:1px solid var(--border);
+    }
+
+    .options,
+    .cards {
+        grid-template-columns:1fr;
+    }
+
+    .mapping-table {
+        min-width:700px;
+    }
+
+    .mapping-scroll {
+        overflow-x:auto;
+    }
+
+    .result {
+        flex-direction:column;
+        align-items:stretch;
+    }
+
+    .download {
+        width:100%;
+    }
+}
+
+</style>
+</head>
+
+
+<body>
+
+
+<header>
+
+<div class="container header-inner">
+
+    <div class="logo">
+
+        <div class="logo-icon">
+            ↔
+        </div>
+
+        ProjectConvert
+
+        <span>
+            / Universal Project Converter
+        </span>
+
+    </div>
+
+    <div class="status">
+
+        <span class="status-dot"></span>
+
+        MPXJ backend ready
+
+    </div>
+
+</div>
+
+</header>
+
+
+<main>
+
+
+<section class="hero">
+
+<div class="container">
+
+    <div class="badge">
+        <strong>●</strong>
+        Loss-aware project conversion
+    </div>
+
+    <h1>
+        Convert without
+        <span class="gradient">
+            losing your data.
+        </span>
+    </h1>
+
+    <p>
+        Read Microsoft Project, Primavera P6, Asta Powerproject and other
+        MPXJ-supported project files, then export to Primavera XER or
+        Microsoft Project XML (MSPDI).
+    </p>
+
+</div>
+
+</section>
+
+
+
+<section class="container">
+
+
+<div class="converter">
+
+
+<div class="converter-header">
+
+    <div>
+
+        <div class="converter-title">
+            Universal Project Converter
+        </div>
+
+        <div class="converter-subtitle">
+            Upload a project file, choose XER or Microsoft Project XML, and convert it with MPXJ.
+        </div>
+
+    </div>
+
+
+    <div class="formats">
+
+        <div class="format mpp">
+            MPP INPUT
+        </div>
+
+        <div class="format xer">
+            XER
+        </div>
+
+        <div class="format pp">
+            XML OUTPUT
+        </div>
+
+    </div>
+
+</div>
+
+
+
+<!-- DROPZONE -->
+
+<div
+    class="dropzone"
+    id="dropzone"
+>
+
+<div>
+
+    <div class="upload-icon">
+        ↑
+    </div>
+
+    <h3>
+        Drop your project file here
+    </h3>
+
+    <p>
+        or choose a project file from your computer
+    </p>
+
+    <button
+        class="browse"
+        id="browse"
+    >
+        Choose project file
+    </button>
+
+    <input
+        id="fileInput"
+        type="file"
+        accept=".mpp,.xer,.pp,.ppx,.xml"
+    >
+
+    <div class="file-types">
+        MPP · XER · PP · PPX · XML
+    </div>
+
+</div>
+
+</div>
+
+
+
+<!-- FILE PANEL -->
+
+<div
+    class="file-panel"
+    id="filePanel"
+>
+
+<div class="file-header">
+
+<div class="file-info">
+
+    <div
+        class="file-icon"
+        id="fileIcon"
+    >
+        MPP
+    </div>
+
+    <div>
+
+        <div
+            class="file-name"
+            id="fileName"
+        >
+            project.mpp
+        </div>
+
+        <div
+            class="file-size"
+            id="fileSize"
+        >
+            0 KB
+        </div>
+
+    </div>
+
+</div>
+
+
+<button
+    class="remove"
+    id="remove"
+>
+    ×
+</button>
+
+</div>
+
+
+
+<div class="stats">
+
+
+<div class="stat">
+
+    <div class="stat-label">
+        Source format
+    </div>
+
+    <div
+        class="stat-value"
+        id="sourceFormat"
+    >
+        —
+    </div>
+
+</div>
+
+
+<div class="stat">
+
+    <div class="stat-label">
+        File size
+    </div>
+
+    <div
+        class="stat-value"
+        id="statSize"
+    >
+        —
+    </div>
+
+</div>
+
+
+<div class="stat">
+
+    <div class="stat-label">
+        Activity codes
+    </div>
+
+    <div
+        class="stat-value"
+        id="activityCodes"
+    >
+        Detected
+    </div>
+
+</div>
+
+
+<div class="stat">
+
+    <div class="stat-label">
+        Custom fields
+    </div>
+
+    <div
+        class="stat-value"
+        id="customFields"
+    >
+        Detected
+    </div>
+
+</div>
+
+
+<div class="stat">
+
+    <div class="stat-label">
+        Data protection
+    </div>
+
+    <div
+        class="stat-value"
+        style="color:#32d583"
+    >
+        Enabled
+    </div>
+
+</div>
+
+
+</div>
+
+</div>
+
+
+
+<!-- OPTIONS -->
+
+<div class="options show" id="options" style="grid-template-columns:1fr;">
+
+<div class="option">
+<label>Convert to</label>
+<select id="target">
+    <option value="xer">Primavera P6 (.xer)</option>
+    <option value="mspdi">Microsoft Project XML / MSPDI (.xml)</option>
+</select>
+</div>
+
+</div>
+
+
+<!-- MAPPING -->
+
+<div
+    class="mapping-section"
+    id="mappingSection"
+>
+
+
+<div class="mapping-header">
+
+    <h3>
+        MPXJ Conversion Mapping
+    </h3>
+
+    <p>
+        The uploaded schedule is read by MPXJ into its ProjectFile model and
+        written using MPXJ's native XER or MSPDI writer. The table below is
+        a coverage guide; the actual conversion is performed by MPXJ on the server.
+    </p>
+
+
+    <div class="mapping-summary">
+
+        <div class="mapping-badge">
+            Activity IDs
+        </div>
+
+        <div class="mapping-badge">
+            Activity Codes
+        </div>
+
+        <div class="mapping-badge">
+            Custom Fields
+        </div>
+
+        <div class="mapping-badge">
+            WBS
+        </div>
+
+        <div class="mapping-badge">
+            Resources
+        </div>
+
+        <div class="mapping-badge">
+            Calendars
+        </div>
+
+        <div class="mapping-badge">
+            Relationships
+        </div>
+
+        <div class="mapping-badge">
+            Constraints
+        </div>
+
+        <div class="mapping-badge">
+            Baselines
+        </div>
+
+        <div class="mapping-badge">
+            Actuals
+        </div>
+
+    </div>
+
+</div>
+
+
+<div class="mapping-scroll">
+
+<table class="mapping-table">
+
+<thead>
+
+<tr>
+
+<th>
+Source
+</th>
+
+<th>
+Source field
+</th>
+
+<th>
+Source value
+</th>
+
+<th>
+Universal model
+</th>
+
+<th>
+Destination
+</th>
+
+<th>
+Handling
+</th>
+
+</tr>
+
+</thead>
+
+
+<tbody id="mappingBody">
+
+</tbody>
+
+</table>
+
+</div>
+
+</div>
+
+
+
+<!-- ACTION -->
+
+<div
+    class="action"
+    id="action"
+>
+
+<button
+    class="convert"
+    id="convert"
+>
+    Analyse & Convert Project
+</button>
+
+</div>
+
+
+
+<!-- PROGRESS -->
+
+<div
+    class="progress"
+    id="progress"
+>
+
+<div class="progress-info">
+
+<span id="progressText">
+    Preparing...
+</span>
+
+<span id="progressPercent">
+    0%
+</span>
+
+</div>
+
+<div class="progress-track">
+
+<div
+    class="progress-fill"
+    id="progressFill"
+></div>
+
+</div>
+
+</div>
+
+
+
+<!-- RESULT -->
+
+<div
+    class="result"
+    id="result"
+>
+
+<div>
+
+<strong>
+    Conversion complete
+</strong>
+
+<div
+    id="resultText"
+    style="
+        color:#8995a5;
+        font-size:10px;
+        margin-top:4px;
+    "
+>
+    Your converted file is ready.
+</div>
+
+</div>
+
+
+<button
+    class="download"
+    id="download"
+>
+    Download converted file
+</button>
+
+</div>
+
+
+</div>
+
+</section>
+
+
+
+<!-- EXPLANATION -->
+
+<section class="explanation">
+
+<div class="container">
+
+
+<div class="heading">
+
+<h2>
+    Data doesn't disappear between systems
+</h2>
+
+<p>
+    The converter uses a universal intermediate data model.
+</p>
+
+</div>
+
+
+
+<div class="cards">
+
+
+<div class="card">
+
+<h3>
+    Activity Codes
+</h3>
+
+<p>
+    Activity codes and their values are extracted into
+    a universal code dictionary. Code names, IDs,
+    descriptions and values are retained even where
+    the destination system uses a different coding
+    structure.
+</p>
+
+</div>
+
+
+<div class="card">
+
+<h3>
+    Custom Fields
+</h3>
+
+<p>
+    Text, number, date, duration, flag, cost and
+    other user-defined fields are retained.
+    Destination-native fields are used where possible;
+    otherwise the original field/value pair is preserved
+    as custom data.
+</p>
+
+</div>
+
+
+<div class="card">
+
+<h3>
+    Relationships
+</h3>
+
+<p>
+    FS, SS, FF and SF relationships, lag values,
+    relationship IDs and predecessor/successor
+    information are preserved through the universal
+    relationship model.
+</p>
+
+</div>
+
+
+<div class="card">
+
+<h3>
+    Calendars
+</h3>
+
+<p>
+    Calendar names, working periods, exceptions,
+    holidays and calendar assignments are retained
+    rather than assuming every project uses a
+    seven-day calendar.
+</p>
+
+</div>
+
+
+<div class="card">
+
+<h3>
+    Resources
+</h3>
+
+<p>
+    Resource IDs, names, types, codes, rates,
+    calendars, units, availability and activity
+    assignments are mapped independently from
+    activity conversion.
+</p>
+
+</div>
+
+
+<div class="card">
+
+<h3>
+    Audit Trail
+</h3>
+
+<p>
+    Each conversion can retain the original source
+    field, universal field and destination field,
+    allowing users to see exactly where project
+    information went.
+</p>
+
+</div>
+
+</div>
+
+</div>
+
+</section>
+
+
+
+<section class="container">
+
+<div class="notice">
+
+<strong>
+Important:
+</strong>
+
+MPP, XER, Powerproject and Microsoft Project XML are substantially different
+project formats. Conversion is performed on the server by MPXJ. The source
+file is read through MPXJ's UniversalProjectReader into MPXJ's ProjectFile
+model and is then written as either Primavera P6 XER or Microsoft Project
+XML (MSPDI).
+
+If a field has no native destination equivalent, the
+converter should preserve the original field name,
+value and source system rather than silently dropping it.
+
+</div>
+
+</section>
+
+
+</main>
+
+
+
+<footer>
+
+ProjectConvert · Loss-aware universal project conversion
+
+</footer>
+
+
+
+<script>
+
+/*
+============================================================
+CONFIGURATION
+============================================================
+
+GitHub Pages hosts the UI.
+
+The actual conversion service should be configured here.
+
+Example:
+
+const API_URL =
+    "https://your-api.example.com/convert";
+
+The API receives:
+
+file
+target
+mappingStrategy
+unmapped
+
+and should return the converted project file.
+
+============================================================
+*/
+
+const API_URL = "/api/convert";
+
+
+/*
+============================================================
+STATE
+============================================================
+*/
+
+let selectedFile = null;
+
+let convertedBlob = null;
+
+let convertedFilename = "";
+
+
+/*
+============================================================
+ELEMENTS
+============================================================
+*/
+
+const dropzone =
+    document.getElementById("dropzone");
+
+const fileInput =
+    document.getElementById("fileInput");
+
+const browse =
+    document.getElementById("browse");
+
+const filePanel =
+    document.getElementById("filePanel");
+
+const options =
+    document.getElementById("options");
+
+const mappingSection =
+    document.getElementById("mappingSection");
+
+const mappingBody =
+    document.getElementById("mappingBody");
+
+const action =
+    document.getElementById("action");
+
+const progress =
+    document.getElementById("progress");
+
+const result =
+    document.getElementById("result");
+
+
+/*
+============================================================
+UNIVERSAL DATA MODEL
+============================================================
+
+This is the critical part.
+
+The converter should never directly translate:
+
+MPP → XER
+XER → PP
+PP → MPP
+
+Instead:
+
+SOURCE
+  ↓
+Universal Project Model
+  ↓
+DESTINATION
+
+============================================================
+*/
+
+const UniversalModel = {
+
+    project: {
+        id:null,
+        name:null,
+        startDate:null,
+        finishDate:null,
+        statusDate:null,
+
+        projectCodes:[],
+        customFields:[]
+    },
+
+
+    wbs:[],
+
+    activities:[],
+
+    activityCodes:[],
+
+    resources:[],
+
+    resourceCodes:[],
+
+    calendars:[],
+
+    relationships:[],
+
+    constraints:[],
+
+    baselines:[],
+
+    expenses:[],
+
+    costAccounts:[],
+
+    obs:[],
+
+    customFields:[],
+
+    metadata:{
+
+        sourceSystem:null,
+
+        sourceFilename:null,
+
+        sourceVersion:null,
+
+        conversionTimestamp:null,
+
+        unmappedFields:[]
+
+    }
+
+};
+
+
+/*
+============================================================
+STANDARD FIELD MAPPING
+============================================================
+*/
+
+const FIELD_MAP = [
+
+    {
+        source:"Activity ID",
+        universal:"activity.id",
+        destination:"Activity ID",
+        handling:"direct"
+    },
+
+    {
+        source:"Activity Name",
+        universal:"activity.name",
+        destination:"Activity Name",
+        handling:"direct"
+    },
+
+    {
+        source:"WBS",
+        universal:"activity.wbsId",
+        destination:"WBS / Summary",
+        handling:"direct"
+    },
+
+    {
+        source:"WBS Code",
+        universal:"wbs.code",
+        destination:"WBS Code",
+        handling:"direct"
+    },
+
+    {
+        source:"Activity Type",
+        universal:"activity.type",
+        destination:"Activity Type",
+        handling:"direct"
+    },
+
+    {
+        source:"Activity Code",
+        universal:"activityCodes[]",
+        destination:"Activity Code",
+        handling:"custom"
+    },
+
+    {
+        source:"Activity Code Value",
+        universal:"activityCodes[].values[]",
+        destination:"Code Value",
+        handling:"custom"
+    },
+
+    {
+        source:"Text Custom Field",
+        universal:"customFields.text[]",
+        destination:"Text Custom Field",
+        handling:"preserved"
+    },
+
+    {
+        source:"Number Custom Field",
+        universal:"customFields.number[]",
+        destination:"Number Custom Field",
+        handling:"preserved"
+    },
+
+    {
+        source:"Date Custom Field",
+        universal:"customFields.date[]",
+        destination:"Date Custom Field",
+        handling:"preserved"
+    },
+
+    {
+        source:"Flag Custom Field",
+        universal:"customFields.flag[]",
+        destination:"Flag Custom Field",
+        handling:"preserved"
+    },
+
+    {
+        source:"Duration",
+        universal:"activity.duration",
+        destination:"Duration",
+        handling:"direct"
+    },
+
+    {
+        source:"Start",
+        universal:"activity.start",
+        destination:"Start",
+        handling:"direct"
+    },
+
+    {
+        source:"Finish",
+        universal:"activity.finish",
+        destination:"Finish",
+        handling:"direct"
+    },
+
+    {
+        source:"Actual Start",
+        universal:"activity.actualStart",
+        destination:"Actual Start",
+        handling:"direct"
+    },
+
+    {
+        source:"Actual Finish",
+        universal:"activity.actualFinish",
+        destination:"Actual Finish",
+        handling:"direct"
+    },
+
+    {
+        source:"Remaining Duration",
+        universal:"activity.remainingDuration",
+        destination:"Remaining Duration",
+        handling:"direct"
+    },
+
+    {
+        source:"Percent Complete",
+        universal:"activity.percentComplete",
+        destination:"% Complete",
+        handling:"direct"
+    },
+
+    {
+        source:"Physical % Complete",
+        universal:"activity.physicalPercentComplete",
+        destination:"Physical % Complete",
+        handling:"direct"
+    },
+
+    {
+        source:"Calendar",
+        universal:"activity.calendarId",
+        destination:"Calendar",
+        handling:"direct"
+    },
+
+    {
+        source:"Constraint Type",
+        universal:"constraints[].type",
+        destination:"Constraint Type",
+        handling:"custom"
+    },
+
+    {
+        source:"Constraint Date",
+        universal:"constraints[].date",
+        destination:"Constraint Date",
+        handling:"custom"
+    },
+
+    {
+        source:"Predecessor",
+        universal:"relationships[].predecessorId",
+        destination:"Predecessor",
+        handling:"direct"
+    },
+
+    {
+        source:"Successor",
+        universal:"relationships[].successorId",
+        destination:"Successor",
+        handling:"direct"
+    },
+
+    {
+        source:"Relationship Type",
+        universal:"relationships[].type",
+        destination:"Relationship Type",
+        handling:"direct"
+    },
+
+    {
+        source:"Relationship Lag",
+        universal:"relationships[].lag",
+        destination:"Lag",
+        handling:"direct"
+    },
+
+    {
+        source:"Resource",
+        universal:"resources[]",
+        destination:"Resource",
+        handling:"direct"
+    },
+
+    {
+        source:"Resource Code",
+        universal:"resourceCodes[]",
+        destination:"Resource Code",
+        handling:"custom"
+    },
+
+    {
+        source:"Resource Rate",
+        universal:"resources[].rate",
+        destination:"Resource Rate",
+        handling:"direct"
+    },
+
+    {
+        source:"Resource Calendar",
+        universal:"resources[].calendarId",
+        destination:"Resource Calendar",
+        handling:"direct"
+    },
+
+    {
+        source:"Baseline",
+        universal:"baselines[]",
+        destination:"Baseline",
+        handling:"custom"
+    },
+
+    {
+        source:"Notes",
+        universal:"activity.notes",
+        destination:"Notes",
+        handling:"preserved"
+    },
+
+    {
+        source:"Priority",
+        universal:"activity.priority",
+        destination:"Priority",
+        handling:"direct"
+    },
+
+    {
+        source:"Cost Account",
+        universal:"costAccounts[]",
+        destination:"Cost Account",
+        handling:"custom"
+    },
+
+    {
+        source:"Expense",
+        universal:"expenses[]",
+        destination:"Expense",
+        handling:"custom"
+    }
+
+];
+
+
+/*
+============================================================
+ACTIVITY CODE MODEL
+============================================================
+
+Example universal representation:
+
+{
+    id:"AC-001",
+    name:"Discipline",
+    description:"Construction discipline",
+
+    values:[
+        {
+            id:"ACV-001",
+            name:"CIVIL"
+        },
+
+        {
+            id:"ACV-002",
+            name:"MECHANICAL"
+        }
+    ]
+}
+
+This allows different source systems to have
+different internal representations without
+destroying the actual code information.
+
+============================================================
+*/
+
+function createActivityCode(
+    id,
+    name,
+    description,
+    values
+) {
+
+    return {
+
+        id,
+
+        name,
+
+        description,
+
+        values:values.map(
+            value => ({
+                id:value.id,
+                name:value.name,
+                description:
+                    value.description || null
+            })
+        )
+
+    };
+
+}
+
+
+/*
+============================================================
+CUSTOM FIELD MODEL
+============================================================
+
+Every custom field keeps:
+
+- source system
+- original field name
+- data type
+- original value
+- universal value
+- destination mapping
+
+============================================================
+*/
+
+function createCustomField(
+    sourceSystem,
+    sourceName,
+    dataType,
+    value
+) {
+
+    return {
+
+        id:
+            crypto.randomUUID(),
+
+        sourceSystem,
+
+        sourceName,
+
+        dataType,
+
+        value,
+
+        universalValue:value,
+
+        destinationMappings:[]
+
+    };
+
+}
+
+
+/*
+============================================================
+BUILD MAPPING TABLE
+============================================================
+*/
+
+function buildMappingTable(
+    source,
+    destination
+) {
+
+    mappingBody.innerHTML = "";
+
+
+    FIELD_MAP.forEach(
+        field => {
+
+            const row =
+                document.createElement("tr");
+
+
+            const statusClass =
+                field.handling === "direct"
+                    ? "status-direct"
+                    : field.handling === "custom"
+                        ? "status-custom"
+                        : "status-preserved";
+
+
+            const statusText =
+                field.handling === "direct"
+                    ? "Direct"
+                    : field.handling === "custom"
+                        ? "Custom mapping"
+                        : "Preserved";
+
+
+            row.innerHTML = `
+
+                <td>
+                    <strong>${source}</strong>
+                </td>
+
+                <td>
+                    ${field.source}
+                </td>
+
+                <td>
+                    <span class="mapping-value">
+                        MPXJ
+                    </span>
+                </td>
+
+                <td>
+                    <span class="mapping-target">
+                        ${field.universal}
+                    </span>
+                </td>
+
+                <td>
+                    ${field.destination}
+                </td>
+
+                <td>
+                    <span
+                        class="mapping-status ${statusClass}"
+                    >
+                        ${statusText}
+                    </span>
+                </td>
+
+            `;
+
+
+            mappingBody.appendChild(row);
+
+        }
+    );
+
+}
+
+
+/*
+============================================================
+FORMAT DETECTION
+============================================================
+*/
+
+function detectFormat(file) {
+
+    const extension =
+        file.name
+            .split(".")
+            .pop()
+            .toLowerCase();
+
+
+    if(extension === "mpp")
+        return "MPP";
+
+
+    if(extension === "xer")
+        return "XER";
+
+
+    if(
+        extension === "pp" ||
+        extension === "ppx"
+    )
+        return "POWERPROJECT";
+
+
+    if(extension === "xml")
+        return "XML";
+
+
+    return "UNKNOWN";
+
+}
+
+
+/*
+============================================================
+FORMAT BYTES
+============================================================
+*/
+
+function formatBytes(bytes) {
+
+    if(!bytes)
+        return "0 Bytes";
+
+
+    const units =
+        [
+            "Bytes",
+            "KB",
+            "MB",
+            "GB"
+        ];
+
+
+    const index =
+        Math.floor(
+            Math.log(bytes) /
+            Math.log(1024)
+        );
+
+
+    return (
+        parseFloat(
+            (
+                bytes /
+                Math.pow(
+                    1024,
+                    index
+                )
+            ).toFixed(2)
+        )
+        +
+        " " +
+        units[index]
+    );
+
+}
+
+
+/*
+============================================================
+FILE SELECTION
+============================================================
+*/
+
+browse.addEventListener(
+    "click",
+    () => fileInput.click()
+);
+
+
+fileInput.addEventListener(
+    "change",
+    event => {
+
+        if(
+            event.target.files.length
+        ) {
+
+            loadFile(
+                event.target.files[0]
+            );
+
+        }
+
+    }
+);
+
+
+dropzone.addEventListener(
+    "dragover",
+    event => {
+
+        event.preventDefault();
+
+        dropzone.classList.add("drag");
+
+    }
+);
+
+
+dropzone.addEventListener(
+    "dragleave",
+    () => {
+
+        dropzone.classList.remove("drag");
+
+    }
+);
+
+
+dropzone.addEventListener(
+    "drop",
+    event => {
+
+        event.preventDefault();
+
+        dropzone.classList.remove("drag");
+
+
+        const file =
+            event.dataTransfer.files[0];
+
+
+        if(file) {
+
+            loadFile(file);
+
+        }
+
+    }
+);
+
+
+/*
+============================================================
+LOAD FILE
+============================================================
+*/
+
+function loadFile(file) {
+
+    const format =
+        detectFormat(file);
+
+
+    if(
+        ![
+            "MPP",
+            "XER",
+            "POWERPROJECT",
+            "XML"
+        ].includes(format)
+    ) {
+
+        alert(
+            "Unsupported project format."
+        );
+
+        return;
+
+    }
+
+
+    selectedFile = file;
+
+
+    document.getElementById(
+        "fileName"
+    ).textContent =
+        file.name;
+
+
+    document.getElementById(
+        "fileSize"
+    ).textContent =
+        formatBytes(file.size);
+
+
+    document.getElementById(
+        "sourceFormat"
+    ).textContent =
+        format;
+
+
+    document.getElementById(
+        "statSize"
+    ).textContent =
+        formatBytes(file.size);
+
+
+    const icon =
+        document.getElementById(
+            "fileIcon"
+        );
+
+
+    icon.textContent =
+        format === "POWERPROJECT"
+            ? "PP"
+            : format;
+
+
+    icon.className =
+        "file-icon";
+
+
+    icon.style.background =
+        format === "MPP"
+            ? "rgba(91,140,255,.12)"
+            : format === "XER"
+                ? "rgba(50,213,131,.12)"
+                : "rgba(155,138,251,.12)";
+
+
+    icon.style.color =
+        format === "MPP"
+            ? "#75a6ff"
+            : format === "XER"
+                ? "#50e59a"
+                : "#ad9fff";
+
+
+    filePanel.classList.add(
+        "show"
+    );
+
+
+    options.classList.add(
+        "show"
+    );
+
+
+    mappingSection.classList.add(
+        "show"
+    );
+
+
+    action.classList.add(
+        "show"
+    );
+
+
+    buildMappingTable(
+        format,
+        document.getElementById(
+            "target"
+        ).value
+    );
+
+}
+
+
+/*
+============================================================
+TARGET CHANGED
+============================================================
+*/
+
+document
+    .getElementById("target")
+    .addEventListener(
+        "change",
+        () => {
+
+            if(!selectedFile)
+                return;
+
+
+            buildMappingTable(
+                detectFormat(selectedFile),
+
+                document.getElementById(
+                    "target"
+                ).value
+            );
+
+        }
+    );
+
+
+/*
+============================================================
+REMOVE
+============================================================
+*/
+
+document
+    .getElementById("remove")
+    .addEventListener(
+        "click",
+        reset
+    );
+
+
+function reset() {
+
+    selectedFile = null;
+
+    convertedBlob = null;
+
+    fileInput.value = "";
+
+    filePanel.classList.remove(
+        "show"
+    );
+
+    options.classList.remove(
+        "show"
+    );
+
+    mappingSection.classList.remove(
+        "show"
+    );
+
+    action.classList.remove(
+        "show"
+    );
+
+    progress.classList.remove(
+        "show"
+    );
+
+    result.classList.remove(
+        "show"
+    );
+
+}
+
+
+/*
+============================================================
+CONVERT
+============================================================
+*/
+
+document
+    .getElementById("convert")
+    .addEventListener(
+        "click",
+        convertProject
+    );
+
+
+async function convertProject() {
+
+    if(!selectedFile)
+        return;
+
+
+    const target =
+        document.getElementById(
+            "target"
+        ).value;
+
+
+    showProgress();
+
+
+    /*
+     * Production API
+     */
+
+    if(API_URL) {
+
+        try {
+
+            const form =
+                new FormData();
+
+
+            form.append(
+                "file",
+                selectedFile
+            );
+
+
+            form.append(
+                "target",
+                target
+            );
+
+
+            updateProgress(
+                15,
+                "Uploading project..."
+            );
+
+
+            const response =
+                await fetch(
+                    API_URL,
+                    {
+                        method:"POST",
+                        body:form
+                    }
+                );
+
+
+            if(!response.ok) {
+                let message = "Conversion failed.";
+                try {
+                    const errorBody = await response.json();
+                    if(errorBody && errorBody.error)
+                        message = errorBody.error;
+                } catch(ignore) {}
+                throw new Error(message);
+            }
+
+
+            updateProgress(
+                65,
+                "Writing destination file with MPXJ..."
+            );
+
+
+            convertedBlob =
+                await response.blob();
+
+
+            updateProgress(
+                100,
+                "Conversion complete"
+            );
+
+
+            const base =
+                selectedFile.name
+                    .replace(
+                        /\.[^/.]+$/,
+                        ""
+                    );
+
+
+            const extension =
+                target === "xer"
+                    ? "xer"
+                    : "xml";
+
+
+            convertedFilename =
+                base +
+                "_converted." +
+                extension;
+
+
+            document.getElementById(
+                "resultText"
+            ).textContent =
+                convertedFilename;
+
+
+            result.classList.add(
+                "show"
+            );
+
+
+            return;
+
+        }
+        catch(error) {
+
+            alert(
+                error.message
+            );
+
+            progress.classList.remove(
+                "show"
+            );
+
+            return;
+
+        }
+
+    }
+
+
+    /*
+     * Demo mode
+     *
+     * Deliberately does NOT pretend to convert
+     * proprietary project files.
+     */
+
+    await demoProgress();
+
+
+    alert(
+        "The mapping interface is ready.\n\n" +
+        "The MPXJ conversion backend is not available at " +
+        API_URL + "."
+    );
+
+
+    progress.classList.remove(
+        "show"
+    );
+
+}
+
+
+/*
+============================================================
+PROGRESS
+============================================================
+*/
+
+function showProgress() {
+
+    progress.classList.add(
+        "show"
+    );
+
+    updateProgress(
+        0,
+        "Preparing project..."
+    );
+
+}
+
+
+function updateProgress(
+    percent,
+    text
+) {
+
+    document.getElementById(
+        "progressFill"
+    ).style.width =
+        percent + "%";
+
+
+    document.getElementById(
+        "progressPercent"
+    ).textContent =
+        percent + "%";
+
+
+    document.getElementById(
+        "progressText"
+    ).textContent =
+        text;
+
+}
+
+
+async function demoProgress() {
+
+    const stages = [
+
+        [15,"Reading project structure..."],
+
+        [30,"Extracting activities..."],
+
+        [45,"Extracting activity codes..."],
+
+        [60,"Extracting custom fields..."],
+
+        [75,"Mapping WBS and relationships..."],
+
+        [90,"Checking unmapped information..."],
+
+        [100,"Mapping analysis complete"]
+
+    ];
+
+
+    for(
+        const stage of stages
+    ) {
+
+        await new Promise(
+            resolve =>
+                setTimeout(
+                    resolve,
+                    300
+                )
+        );
+
+
+        updateProgress(
+            stage[0],
+            stage[1]
+        );
+
+    }
+
+}
+
+
+/*
+============================================================
+DOWNLOAD
+============================================================
+*/
+
+document
+    .getElementById("download")
+    .addEventListener(
+        "click",
+        () => {
+
+            if(!convertedBlob)
+                return;
+
+
+            const url =
+                URL.createObjectURL(
+                    convertedBlob
+                );
+
+
+            const a =
+                document.createElement(
+                    "a"
+                );
+
+
+            a.href = url;
+
+            a.download =
+                convertedFilename;
+
+
+            document.body.appendChild(a);
+
+            a.click();
+
+            a.remove();
+
+
+            URL.revokeObjectURL(
+                url
+            );
+
+        }
+    );
+
+
+</script>
+
+</body>
+</html>
