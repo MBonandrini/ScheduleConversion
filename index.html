@@ -21,15 +21,14 @@ header{height:70px;position:sticky;top:0;z-index:50;background:rgba(7,10,15,.88)
 @media(max-width:750px){.container{width:calc(100% - 24px)}.converter-header{flex-direction:column;align-items:flex-start;gap:12px}.formats{width:100%}.format{flex:1;text-align:center}.stats{grid-template-columns:repeat(2,1fr)}.stat:nth-child(2n){border-right:0}.stat:nth-child(-n+2){border-bottom:1px solid var(--border)}.options,.cards{grid-template-columns:1fr}.result{flex-direction:column;align-items:stretch}.download{width:100%}.logo span{display:none}}
 </style>
 <script src="https://cjrtnc.leaningtech.com/4.3/loader.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
 </head>
 <body>
-<header><div class="container header-inner"><div class="logo"><div class="logo-icon">↔</div>ProjectConvert <span>/ MPXJ Browser Converter</span></div><div class="status" id="topStatus"><span class="status-dot"></span><span id="topStatusText">Starting MPXJ engine…</span></div></div></header>
+<header><div class="container header-inner"><div class="logo"><div class="logo-icon">↔</div>ProjectConvert <span>/ MPXJ Browser Converter</span></div><div class="status ready" id="topStatus"><span class="status-dot"></span><span id="topStatusText">Ready — engine loads on first conversion</span></div></div></header>
 <main>
 <section class="hero"><div class="container"><div class="badge"><strong>●</strong> Browser-only conversion · No project upload</div><h1>Convert without <span class="gradient">a backend.</span></h1><p>Read project schedules with MPXJ directly in your browser and export them as Primavera P6 XER or Microsoft Project XML. Your selected project file is processed locally in the browser.</p></div></section>
 <section class="container"><div class="converter">
 <div class="converter-header"><div><div class="converter-title">Universal Project Converter</div><div class="converter-subtitle">GitHub Pages compatible · CheerpJ + MPXJ 16.7.0</div></div><div class="formats"><div class="format mpp">MPP</div><div class="format xer">XER</div><div class="format xml">XML</div><div class="format pp">PP</div></div></div>
-<div class="engine" id="engine"><span class="engine-spin" id="engineIcon"></span><span id="engineText"><strong>MPXJ:</strong> loading Java runtime…</span></div>
+<div class="engine" id="engine"><span class="engine-ready" id="engineIcon"></span><span id="engineText"><strong>MPXJ:</strong> Ready — loads when you convert</span></div>
 <div class="dropzone" id="dropzone"><div><div class="upload-icon">↑</div><h3>Drop your project file here</h3><p>or choose a schedule file from your computer</p><button class="browse" id="browse">Choose project file</button><input id="fileInput" type="file" accept=".mpp,.mpt,.xer,.xml,.mpx,.pp,.ppx,.pmxml,.gan,.planner,.bk3,.sdef,.sp"><div class="file-types">MPP · MPT · XER · MSPDI XML · PMXML · MPX · PP · PPX · and other MPXJ-readable formats</div></div></div>
 <div class="file-panel" id="filePanel"><div class="file-header"><div class="file-info"><div class="file-icon" id="fileIcon">FILE</div><div><div class="file-name" id="fileName">project.mpp</div><div class="file-size" id="fileSize">0 KB</div></div></div><button class="remove" id="remove" title="Remove file">×</button></div><div class="stats"><div class="stat"><div class="stat-label">Source format</div><div class="stat-value" id="sourceFormat">—</div></div><div class="stat"><div class="stat-label">File size</div><div class="stat-value" id="statSize">—</div></div><div class="stat"><div class="stat-label">Reader</div><div class="stat-value">MPXJ</div></div><div class="stat"><div class="stat-label">Processing</div><div class="stat-value" style="color:#32d583">Local browser</div></div></div></div>
 <div class="options" id="options"><div class="option"><label>Convert to</label><select id="target"><option value="xer">Primavera P6 XER (.xer)</option><option value="xml">Microsoft Project XML / MSPDI (.xml)</option></select></div><div class="option"><label>Project-file privacy</label><div class="privacy-copy"><strong>Local processing.</strong> The selected schedule is placed in CheerpJ's temporary browser filesystem and is not posted to a ProjectConvert server.</div></div></div>
@@ -46,13 +45,43 @@ header{height:70px;position:sticky;top:0;z-index:50;background:rgba(7,10,15,.88)
 "use strict";
 
 const MPXJ_VERSION = "16.7.0";
-const MPXJ_ZIP_URL = `https://github.com/joniles/mpxj/releases/download/v${MPXJ_VERSION}/mpxj-${MPXJ_VERSION}.zip`;
+const MAVEN_BASE = "https://repo.maven.apache.org/maven2";
+
+// Runtime JARs required for the conversion paths used by this page.
+// These are loaded only when Convert is pressed. No GitHub release asset fetch is used.
+const ENGINE_ARTIFACTS = [
+  ["net.sf.mpxj","mpxj","16.7.0"],
+  ["org.apache.poi","poi","5.5.1"],
+  ["commons-codec","commons-codec","1.20.0"],
+  ["org.apache.commons","commons-collections4","4.5.0"],
+  ["org.apache.commons","commons-math3","3.6.1"],
+  ["commons-io","commons-io","2.21.0"],
+  ["com.zaxxer","SparseBitSet","1.3"],
+  ["org.apache.logging.log4j","log4j-api","2.24.3"],
+  ["com.github.joniles","rtfparserkit","1.16.0"],
+  ["jakarta.xml.bind","jakarta.xml.bind-api","3.0.1"],
+  ["org.glassfish.jaxb","jaxb-runtime","3.0.2"],
+  ["org.glassfish.jaxb","jaxb-core","3.0.2"],
+  ["org.glassfish.jaxb","txw2","3.0.2"],
+  ["com.sun.istack","istack-commons-runtime","4.0.1"],
+  ["jakarta.activation","jakarta.activation-api","2.0.1"],
+  ["com.fasterxml.jackson.core","jackson-core","2.22.1"],
+  ["com.fasterxml.jackson.core","jackson-databind","2.22.1"],
+  ["com.fasterxml.jackson.core","jackson-annotations","2.22.1"],
+  ["org.jsoup","jsoup","1.23.1"],
+  ["com.jgoodies","jgoodies-common","1.8.1"],
+  ["com.jgoodies","jgoodies-binding","2.13.0"],
+  ["com.healthmarketscience.jackcess","jackcess","4.0.10"],
+  ["org.apache.commons","commons-lang3","3.18.0"]
+];
 
 let selectedFile = null;
 let convertedBlob = null;
 let convertedFilename = "";
 let engineClassPath = "";
 let engineReady = false;
+let engineLoading = false;
+let enginePromise = null;
 const WRAPPER_JAR_BASE64 = "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";
 
 const $ = id => document.getElementById(id);
@@ -68,71 +97,77 @@ function detectFormat(file){ const ext=(file.name.split(".").pop()||"").toLowerC
 function safeName(name){ return name.replace(/[^a-zA-Z0-9._-]/g,"_"); }
 function base64ToUint8Array(base64){ const binary=atob(base64); const bytes=new Uint8Array(binary.length); for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i); return bytes; }
 
+async function fetchJar(groupId, artifactId, version, index, total){
+  const groupPath=groupId.replace(/\./g,"/");
+  const url=`${MAVEN_BASE}/${groupPath}/${artifactId}/${version}/${artifactId}-${version}.jar`;
+  setEngineState("loading",`loading MPXJ libraries ${index}/${total}…`);
+  log(`Fetching ${artifactId}-${version}.jar from Maven Central…`);
+  const response=await fetch(url,{mode:"cors",cache:"force-cache"});
+  if(!response.ok) throw new Error(`${artifactId}-${version}.jar returned HTTP ${response.status}.`);
+  const bytes=new Uint8Array(await response.arrayBuffer());
+  const path=`/str/lib_${index}_${safeName(artifactId)}-${safeName(version)}.jar`;
+  cheerpOSAddStringFile(path,bytes);
+  log(`Mounted ${artifactId}-${version}.jar (${formatBytes(bytes.byteLength)}).`);
+  return path;
+}
+
 async function initialiseEngine(){
-  try{
-    setEngineState("loading","initialising Java 17 runtime…");
-    log("Initialising CheerpJ 4.3 (Java 17)…");
-    await cheerpjInit({version:17});
+  if(engineReady) return;
+  if(enginePromise) return enginePromise;
 
-    setEngineState("loading",`downloading MPXJ ${MPXJ_VERSION} distribution…`);
-    log(`Fetching ${MPXJ_ZIP_URL}`);
-    const response=await fetch(MPXJ_ZIP_URL,{cache:"force-cache"});
-    if(!response.ok) throw new Error(`MPXJ download returned HTTP ${response.status}.`);
-    const zipBytes=await response.arrayBuffer();
-    log(`MPXJ distribution downloaded (${formatBytes(zipBytes.byteLength)}).`);
+  enginePromise=(async()=>{
+    try{
+      engineLoading=true;
+      clearError();
+      setEngineState("loading","initialising Java 17 runtime…");
+      log("Initialising CheerpJ 4.3 (Java 17)…");
+      await cheerpjInit({version:17});
 
-    setEngineState("loading","unpacking MPXJ libraries in browser…");
-    const zip=await JSZip.loadAsync(zipBytes);
-    const jarEntries=Object.values(zip.files).filter(entry=>!entry.dir && entry.name.toLowerCase().endsWith(".jar"));
-    if(!jarEntries.length) throw new Error("No JAR files were found in the MPXJ distribution.");
+      const wrapperBytes=base64ToUint8Array(WRAPPER_JAR_BASE64);
+      const wrapperPath="/str/projectconvert-browser.jar";
+      cheerpOSAddStringFile(wrapperPath,wrapperBytes);
+      log("Embedded ProjectConvert Java bridge mounted.");
 
-    const mounted=[];
-    let counter=0;
-    for(const entry of jarEntries){
-      counter++;
-      const bytes=await entry.async("uint8array");
-      const base=safeName(entry.name.split("/").pop());
-      const path=`/str/mpxj_${counter}_${base}`;
-      cheerpOSAddStringFile(path,bytes);
-      mounted.push({path,base});
-      if(counter===1 || counter%5===0) setEngineState("loading",`mounting MPXJ libraries ${counter}/${jarEntries.length}…`);
+      const mounted=[];
+      for(let i=0;i<ENGINE_ARTIFACTS.length;i++){
+        const [groupId,artifactId,version]=ENGINE_ARTIFACTS[i];
+        mounted.push(await fetchJar(groupId,artifactId,version,i+1,ENGINE_ARTIFACTS.length));
+      }
+
+      engineClassPath=[wrapperPath,...mounted].join(":");
+      engineReady=true;
+      setEngineState("ready",`MPXJ ${MPXJ_VERSION} ready`);
+      log(`MPXJ ${MPXJ_VERSION} browser engine ready.`);
+    }catch(err){
+      console.error(err);
+      engineReady=false;
+      engineClassPath="";
+      setEngineState("error","engine failed to load");
+      showError(`The browser conversion engine could not start. ${err?.message||err} The GitHub release download has been removed; this version requires access to the CheerpJ CDN and Maven Central.`);
+      throw err;
+    }finally{
+      engineLoading=false;
+      enginePromise=null;
+      refreshConvertButton();
     }
-    log(`Mounted ${mounted.length} Java libraries.`);
+  })();
 
-    // Put MPXJ itself first, followed by its dependency JARs.
-    mounted.sort((a,b)=>{
-      const am=/^mpxj[-_].*\.jar$/i.test(a.base)?0:1;
-      const bm=/^mpxj[-_].*\.jar$/i.test(b.base)?0:1;
-      return am-bm || a.base.localeCompare(b.base);
-    });
-
-    // The tiny reflection-only Java bridge is embedded directly in this HTML.
-    const wrapperBytes=base64ToUint8Array(WRAPPER_JAR_BASE64);
-    const wrapperPath="/str/projectconvert-browser.jar";
-    cheerpOSAddStringFile(wrapperPath,wrapperBytes);
-    engineClassPath=[wrapperPath,...mounted.map(x=>x.path)].join(":");
-    log("Embedded ProjectConvert Java bridge mounted.");
-
-    // CheerpJ's main-class API explicitly supports a colon-separated classpath.
-    // We defer the first MPXJ class load until conversion to avoid reading a project at startup.
-    engineReady=true;
-    setEngineState("ready",`MPXJ ${MPXJ_VERSION} ready`);
-    log(`MPXJ ${MPXJ_VERSION} engine ready.`);
-    refreshConvertButton();
-  }catch(err){
-    console.error(err);
-    engineReady=false;
-    setEngineState("error","engine failed to load");
-    convertButton.disabled=true;
-    convertButton.textContent="MPXJ engine unavailable";
-    showError(`The browser conversion engine could not start. ${err?.message||err} Check that GitHub, the CheerpJ CDN and jsDelivr are not being blocked by the browser/network.`);
-  }
+  return enginePromise;
 }
 
 function refreshConvertButton(){
-  if(!selectedFile){ convertButton.disabled=true; convertButton.textContent=engineReady?"Choose a project file first":"MPXJ engine is still loading…"; return; }
-  if(!engineReady){ convertButton.disabled=true; convertButton.textContent="MPXJ engine is still loading…"; return; }
-  convertButton.disabled=false; convertButton.textContent="Convert with MPXJ";
+  if(!selectedFile){
+    convertButton.disabled=true;
+    convertButton.textContent="Choose a project file first";
+    return;
+  }
+  if(engineLoading){
+    convertButton.disabled=true;
+    convertButton.textContent="Loading MPXJ engine…";
+    return;
+  }
+  convertButton.disabled=false;
+  convertButton.textContent=engineReady?"Convert with MPXJ":"Convert with MPXJ";
 }
 
 function loadFile(file){
@@ -146,9 +181,14 @@ browse.addEventListener("click",()=>fileInput.click()); fileInput.addEventListen
 dropzone.addEventListener("dragover",e=>{e.preventDefault();dropzone.classList.add("drag");}); dropzone.addEventListener("dragleave",()=>dropzone.classList.remove("drag")); dropzone.addEventListener("drop",e=>{e.preventDefault();dropzone.classList.remove("drag");if(e.dataTransfer.files[0])loadFile(e.dataTransfer.files[0]);}); $("remove").addEventListener("click",reset);
 
 async function convertProject(){
-  if(!selectedFile||!engineReady||!engineClassPath)return;
+  if(!selectedFile)return;
   clearError(); result.classList.remove("show"); convertButton.disabled=true;
   try{
+    if(!engineReady){
+      updateProgress(3,"Starting browser conversion engine…");
+      await initialiseEngine();
+    }
+    if(!engineClassPath) throw new Error("MPXJ classpath was not created.");
     const target=$("target").value;
     const ext=target==="xer"?"xer":"xml";
     const formatName=target==="xer"?"XER":"MSPDI";
@@ -191,7 +231,7 @@ async function convertProject(){
 convertButton.addEventListener("click",convertProject);
 $("download").addEventListener("click",()=>{ if(!convertedBlob)return; const url=URL.createObjectURL(convertedBlob); const a=document.createElement("a"); a.href=url; a.download=convertedFilename; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),1000); });
 
-initialiseEngine();
+refreshConvertButton();
 </script>
 </body>
 </html>
