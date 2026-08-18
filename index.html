@@ -27,12 +27,12 @@ header{height:70px;position:sticky;top:0;z-index:50;background:rgba(7,10,15,.88)
 <main>
 <section class="hero"><div class="container"><div class="badge"><strong>●</strong> Browser-only conversion · No project upload</div><h1>Convert without <span class="gradient">a backend.</span></h1><p>Read project schedules with MPXJ directly in your browser and export them as Primavera P6 XER or Microsoft Project XML. Your selected project file is processed locally in the browser.</p></div></section>
 <section class="container"><div class="converter">
-<div class="converter-header"><div><div class="converter-title">Universal Project Converter</div><div class="converter-subtitle">GitHub Pages compatible · CheerpJ + MPXJ 16.7.0</div></div><div class="formats"><div class="format mpp">MPP</div><div class="format xer">XER</div><div class="format xml">XML</div><div class="format pp">PP</div></div></div>
+<div class="converter-header"><div><div class="converter-title">Universal Project Converter</div><div class="converter-subtitle">GitHub Pages compatible · CheerpJ 4.3 + MPXJ 16.7.0 · Bridge 2.0</div></div><div class="formats"><div class="format mpp">MPP</div><div class="format xer">XER</div><div class="format xml">XML</div><div class="format pp">PP</div></div></div>
 <div class="engine" id="engine"><span class="engine-ready" id="engineIcon"></span><span id="engineText"><strong>MPXJ:</strong> Ready — loads when you convert</span></div>
 <div class="dropzone" id="dropzone"><div><div class="upload-icon">↑</div><h3>Drop your project file here</h3><p>or choose a schedule file from your computer</p><button class="browse" id="browse">Choose project file</button><input id="fileInput" type="file" accept=".mpp,.mpt,.xer,.xml,.mpx,.pp,.ppx,.pmxml,.gan,.planner,.bk3,.sdef,.sp"><div class="file-types">MPP · MPT · XER · MSPDI XML · PMXML · MPX · PP · PPX · and other MPXJ-readable formats</div></div></div>
 <div class="file-panel" id="filePanel"><div class="file-header"><div class="file-info"><div class="file-icon" id="fileIcon">FILE</div><div><div class="file-name" id="fileName">project.mpp</div><div class="file-size" id="fileSize">0 KB</div></div></div><button class="remove" id="remove" title="Remove file">×</button></div><div class="stats"><div class="stat"><div class="stat-label">Source format</div><div class="stat-value" id="sourceFormat">—</div></div><div class="stat"><div class="stat-label">File size</div><div class="stat-value" id="statSize">—</div></div><div class="stat"><div class="stat-label">Reader</div><div class="stat-value">MPXJ</div></div><div class="stat"><div class="stat-label">Processing</div><div class="stat-value" style="color:#32d583">Local browser</div></div></div></div>
 <div class="options" id="options"><div class="option"><label>Convert to</label><select id="target"><option value="xer">Primavera P6 XER (.xer)</option><option value="xml">Microsoft Project XML / MSPDI (.xml)</option></select></div><div class="option"><label>Project-file privacy</label><div class="privacy-copy"><strong>Local processing.</strong> The selected schedule is placed in CheerpJ's temporary browser filesystem and is not posted to a ProjectConvert server.</div></div></div>
-<div class="mapping-section" id="mappingSection"><div class="mapping-header"><h3>MPXJ Project Model</h3><p>Instead of translating fields in JavaScript, the source file is read into MPXJ's ProjectFile model and written using MPXJ's native XER or MSPDI writer.</p><div class="mapping-summary"><div class="mapping-badge">Tasks / Activities</div><div class="mapping-badge">WBS</div><div class="mapping-badge">Calendars</div><div class="mapping-badge">Relationships</div><div class="mapping-badge">Resources</div><div class="mapping-badge">Assignments</div><div class="mapping-badge">Constraints</div><div class="mapping-badge">Actuals</div><div class="mapping-badge">Custom Fields</div><div class="mapping-badge">Activity Codes</div></div></div></div>
+<div class="mapping-section" id="mappingSection"><div class="mapping-header"><h3>MPXJ Project Model</h3><p>The source file is read into MPXJ's ProjectFile model. XER and MPP use format-specific MPXJ readers in the browser, with MPXJ's native XER or MSPDI writer generating the output.</p><div class="mapping-summary"><div class="mapping-badge">Tasks / Activities</div><div class="mapping-badge">WBS</div><div class="mapping-badge">Calendars</div><div class="mapping-badge">Relationships</div><div class="mapping-badge">Resources</div><div class="mapping-badge">Assignments</div><div class="mapping-badge">Constraints</div><div class="mapping-badge">Actuals</div><div class="mapping-badge">Custom Fields</div><div class="mapping-badge">Activity Codes</div></div></div></div>
 <div class="action" id="action"><button class="convert" id="convert" disabled>Choose a project file first</button></div>
 <div class="progress" id="progress"><div class="progress-info"><span id="progressText">Preparing…</span><span id="progressPercent">0%</span></div><div class="progress-track"><div class="progress-fill" id="progressFill"></div></div></div>
 <div class="log" id="log"></div><div class="error-box" id="errorBox"></div>
@@ -95,6 +95,32 @@ function formatBytes(bytes){ if(!bytes)return"0 Bytes"; const units=["Bytes","KB
 function detectFormat(file){ const ext=(file.name.split(".").pop()||"").toLowerCase(); const map={mpp:"MPP",mpt:"MPT",xer:"XER",xml:"XML",pmxml:"PMXML",mpx:"MPX",pp:"POWERPROJECT",ppx:"PPX",gan:"GANTTPROJECT",planner:"PLANNER",bk3:"OPEN PLAN",sdef:"SDEF",sp:"SYNCHRO"}; return map[ext]||ext.toUpperCase()||"UNKNOWN"; }
 function safeName(name){ return name.replace(/[^a-zA-Z0-9._-]/g,"_"); }
 function base64ToUint8Array(base64){ const binary=atob(base64); const bytes=new Uint8Array(binary.length); for(let i=0;i<binary.length;i++)bytes[i]=binary.charCodeAt(i); return bytes; }
+
+async function readJavaStatus(statusPath){
+  try{
+    const blob=await cjFileBlob(statusPath);
+    if(!blob||blob.size===0)return "";
+    return await blob.text();
+  }catch(_){
+    return "";
+  }
+}
+
+function appendJavaStatus(text){
+  if(!text)return;
+  const lines=text.split(/\r?\n/).filter(Boolean);
+  for(const line of lines) log(`JAVA: ${line}`);
+}
+
+function conciseJavaError(text){
+  if(!text)return "No detailed Java diagnostic was produced.";
+  const lines=text.split(/\r?\n/);
+  const marker=lines.indexOf("ERROR_DETAILS_BEGIN");
+  if(marker>=0 && lines[marker+1]) return lines[marker+1];
+  const resultError=lines.findIndex(x=>x==="RESULT=ERROR");
+  if(resultError>=0 && lines[resultError+1]) return lines[resultError+1];
+  return lines.find(x=>/Exception|Error|NoClassDefFound|ClassNotFound/i.test(x)) || "Java conversion failed. See the conversion log for details.";
+}
 
 async function initialiseEngine(){
   if(engineReady) return;
@@ -175,6 +201,7 @@ async function convertProject(){
     const token=Date.now()+"_"+Math.random().toString(36).slice(2);
     const inputPath=`/str/input_${token}_${safeName(selectedFile.name)}`;
     const outputPath=`/files/projectconvert_${token}.${ext}`;
+    const statusPath=`/files/projectconvert_${token}_status.txt`;
 
     updateProgress(8,"Reading selected file into browser…");
     const inputBytes=new Uint8Array(await selectedFile.arrayBuffer());
@@ -188,9 +215,18 @@ async function convertProject(){
       engineClassPath,
       inputPath,
       outputPath,
-      formatName
+      formatName,
+      statusPath
     );
-    if(Number(exitCode)!==0) throw new Error(`MPXJ returned exit code ${exitCode}.`);
+
+    const javaStatus=await readJavaStatus(statusPath);
+    appendJavaStatus(javaStatus);
+    if(Number(exitCode)!==0){
+      throw new Error(`MPXJ returned exit code ${exitCode}: ${conciseJavaError(javaStatus)}`);
+    }
+    if(javaStatus && !javaStatus.includes("RESULT=SUCCESS")){
+      throw new Error(`MPXJ did not report a successful conversion: ${conciseJavaError(javaStatus)}`);
+    }
 
     updateProgress(90,"Reading converted file from Java filesystem…");
     convertedBlob=await cjFileBlob(outputPath);
@@ -201,7 +237,7 @@ async function convertProject(){
     log(`Conversion complete: ${convertedFilename} (${formatBytes(convertedBlob.size)}).`);
   }catch(err){
     console.error(err);
-    showError(`Conversion failed: ${err?.message||err}. The browser console may contain additional MPXJ/CheerpJ details.`);
+    showError(`Conversion failed: ${err?.message||err}. Full Java diagnostics are shown in the conversion log above.`);
     progress.classList.remove("show");
   }finally{ refreshConvertButton(); }
 }
